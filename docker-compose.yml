@@ -1,0 +1,118 @@
+# Specify the Docker Compose file version (optional in newer versions, but good practice for clarity)
+# '3.8' is a very common, stable version that supports all the features we need.
+version: '3.8'
+
+# The 'services' section defines the different containers that make up your application.
+# Each service will run as a separate Docker container.
+services:
+  # ---------------------------------------------------------
+  # PostgreSQL Database Service
+  # ---------------------------------------------------------
+  postgres:
+    # 'image' specifies the Docker image to use. 
+    # 'postgres' is the official image, '16' is the version, and 'alpine' means it's built on 
+    # Alpine Linux, which is a very small and lightweight operating system.
+    image: postgres:16-alpine
+
+    # 'container_name' gives your running container a custom, recognizable name.
+    # If you don't specify this, Docker will generate a random, sometimes confusing name.
+    container_name: event-calendar-postgres
+
+    # 'ports' maps ports from your host machine (your computer) to the container.
+    # Format is "HOST_PORT:CONTAINER_PORT".
+    # Here, we map port 5432 on your computer to port 5432 inside the container,
+    # which is the default port PostgreSQL listens on.
+    ports:
+      - '5432:5432'
+
+    # 'environment' defines environment variables that are passed into the container.
+    # For the official Postgres image, these variables are required to set up the initial database.
+    environment:
+      # Sets the name of the default database that is created when the container starts.
+      POSTGRES_DB: event_calendar
+      # Sets the default superuser name.
+      POSTGRES_USER: postgres
+      # Sets the password for the superuser.
+      POSTGRES_PASSWORD: postgres
+
+    # 'volumes' are used to persist data. If a container is destroyed, its internal data is lost.
+    # By mapping a named volume to a path inside the container, the data is saved on your host machine.
+    volumes:
+      # 'postgres_data' is the name of our volume (defined at the bottom of this file).
+      # '/var/lib/postgresql/data' is where Postgres stores its database files inside the container.
+      - postgres_data:/var/lib/postgresql/data
+
+    # 'networks' connects this container to a specific custom network.
+    # This allows it to communicate securely with other containers on the same network.
+    networks:
+      - event-calendar-network
+
+    # 'healthcheck' tells Docker how to check if the service is actually ready and working,
+    # not just if the container is running.
+    healthcheck:
+      # The command to run inside the container to check health.
+      # 'pg_isready' is a PostgreSQL utility that checks connection status.
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      # How often to perform the check.
+      interval: 5s
+      # How long to wait for the check to succeed before considering it failed.
+      timeout: 5s
+      # How many consecutive failures are needed to mark the container as "unhealthy".
+      retries: 5
+
+  # ---------------------------------------------------------
+  # Redis Cache / Message Broker Service
+  # ---------------------------------------------------------
+  redis:
+    # Uses the latest official Redis image based on the lightweight Alpine Linux.
+    image: redis:alpine
+
+    # Custom name for the Redis container.
+    container_name: event-calendar-redis
+
+    # Maps the default Redis port (6379) from the container to your host machine.
+    ports:
+      - '6379:6379'
+
+    # Persists Redis data to a named volume, so cached data or message queues aren't lost on restart.
+    volumes:
+      # 'redis_data' is the volume name, '/data' is the default directory where Redis stores data.
+      - redis_data:/data
+
+    # 'command' overrides the default command that runs when the container starts.
+    # We use this to start the redis-server with AOF (Append Only File) persistence enabled.
+    # This ensures that BullMQ jobs (or any other data) survive if the Redis container restarts.
+    command: redis-server --appendonly yes
+
+    # Connects the Redis container to our custom network.
+    networks:
+      - event-calendar-network
+
+    # Health check for Redis to ensure it's ready to accept connections.
+    healthcheck:
+      # 'redis-cli ping' is a simple command that returns 'PONG' if Redis is healthy.
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+# ---------------------------------------------------------
+# Networks Configuration
+# ---------------------------------------------------------
+# 'networks' defines custom networks for our containers to use.
+networks:
+  event-calendar-network:
+    # 'bridge' is the default network driver. It creates an isolated network on your host
+    # machine where containers can talk to each other using their container names as hostnames.
+    driver: bridge
+
+# ---------------------------------------------------------
+# Volumes Configuration
+# ---------------------------------------------------------
+# 'volumes' defines named volumes that can be used by services to persist data.
+# Docker will manage these volumes on your host machine's file system.
+volumes:
+  # Declares the volume for PostgreSQL data.
+  postgres_data:
+  # Declares the volume for Redis data.
+  redis_data:
