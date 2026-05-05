@@ -3,7 +3,7 @@ import {
   IsNotEmpty,
   MaxLength,
   IsOptional,
-  IsDateString,
+  IsDate,
   MinDate,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -31,7 +31,7 @@ export class CreateEventDto {
   // We use @Type to transform the incoming JSON string into a Date object so that
   // @MinDate can correctly compare it against a Date object.
   @Type(() => Date)
-  @IsDateString()
+  @IsDate()
   @MinDate(new Date())
   scheduledAt: Date;
 }
