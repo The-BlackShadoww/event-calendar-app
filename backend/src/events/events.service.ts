@@ -33,9 +33,9 @@ import { QueueService } from '../queue/queue.service';
 //     invalid from ACTIVE/CANCELLED_SCHEDULE/CANCELLED -> BadRequestException
 //
 //   cancelEvent(id):
-//     ACTIVE|PENDING --cancelEvent()--> CANCELLED
+//     ACTIVE|PENDING|CANCELLED_SCHEDULE --cancelEvent()--> CANCELLED
 //     side effects: for PENDING remove BullMQ delayed job, updatedAt -> now()
-//     invalid from CANCELLED_SCHEDULE/CANCELLED -> BadRequestException
+//     invalid from CANCELLED -> BadRequestException
 //
 // High-level lifecycle:
 //   CREATE -> PENDING -> ACTIVE -> CANCELLED

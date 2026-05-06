@@ -36,14 +36,7 @@ export class EventsController {
   }
 
   @Get(':id')
-  async findOne(
-    // ParseIntPipe automatically intercepts the string ':id' parameter from the URL,
-    // attempts to parse it into a JavaScript number, and automatically throws a
-    // 400 Bad Request exception if the string cannot be parsed (e.g., /events/abc).
-    // This guarantees that our 'id' argument is safely typed as a number before
-    // it ever reaches our route handler or service.
-    @Param('id', ParseIntPipe) id: number,
-  ) {
+  async findOne(@Param('id', ParseIntPipe) id: number) {
     return await this.eventsService.findOne(id);
   }
 
