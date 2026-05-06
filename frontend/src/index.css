@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+@theme {
+  --color-zapier-black: #201515;
+  --color-cream: #fffefb;
+  --color-off-white: #fffdf9;
+  --color-zapier-orange: #ff4f00;
+  --color-dark-charcoal: #36342e;
+  --color-warm-gray: #939084;
+  --color-sand: #c5c0b1;
+  --color-light-sand: #eceae3;
+  --color-mid-warm: #b5b2aa;
+  --color-overlay-dark: rgb(45 45 46 / 50%);
+  --color-overlay-dark-solid: #2d2d2e;
+
+  --font-display: "Degular Display", Inter, Helvetica, Arial, sans-serif;
+  --font-sans: Inter, Helvetica, Arial, sans-serif;
+  --font-editorial: "GT Alpina", Georgia, serif;
+  --font-system-ui: Arial, sans-serif;
+
+  --text-display-xl: 5rem;
+  --text-display-xl--line-height: 0.9;
+  --text-display: 3.5rem;
+  --text-display--line-height: 0.9;
+  --text-display-sm: 2.5rem;
+  --text-display-sm--line-height: 0.9;
+  --text-section: 3rem;
+  --text-section--line-height: 1.04;
+  --text-sub-lg: 2.25rem;
+  --text-sub-lg--letter-spacing: -1px;
+  --text-card-title: 1.5rem;
+  --text-card-title--letter-spacing: -0.48px;
+  --text-body-lg: 1.25rem;
+  --text-body-lg--line-height: 1.2;
+  --text-body: 1rem;
+  --text-body--line-height: 1.25;
+  --text-micro: 0.75rem;
+  --text-micro--letter-spacing: 0.5px;
+
+  --tracking-label: 0.5px;
+  --tracking-editorial: -1.92px;
+  --tracking-editorial-sub: -1.6px;
+
+  --radius-tight: 3px;
+  --radius-content: 5px;
+  --radius-social: 14px;
+  --radius-pill: 20px;
+
+  --spacing-calendar: 640px;
+
+  --container-page: 1200px;
+
+  --shadow-tab-active: rgb(255 79 0) 0px -4px 0px 0px inset;
+  --shadow-tab-hover: rgb(197 192 177) 0px -4px 0px 0px inset;
+}

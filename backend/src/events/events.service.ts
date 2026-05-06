@@ -173,9 +173,15 @@ export class EventsService {
       throw new NotFoundException(`Event with id ${id} not found`);
     }
 
-    if (event.status !== 'ACTIVE' && event.status !== 'PENDING') {
+    // if (event.status !== 'ACTIVE' && event.status !== 'PENDING') {
+    //   throw new BadRequestException(
+    //     `Cannot cancel event with status '${event.status}'. Event must be ACTIVE or PENDING.`,
+    //   );
+    // }
+
+    if (event.status === 'CANCELLED') {
       throw new BadRequestException(
-        `Cannot cancel event with status '${event.status}'. Event must be ACTIVE or PENDING.`,
+        `Cannot cancel event with status '${event.status}'.`,
       );
     }
 
