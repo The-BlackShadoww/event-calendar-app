@@ -1,19 +1,44 @@
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, useMemo, useState } from 'react';
 import { EventsCalendar } from '../components/events/EventsCalendar';
 import { EventsTable } from '../components/events/EventsTable';
 import { useCreateEvent, useEvents } from '../hooks/useEvents';
+import type { EventStatus } from '../types/event.types';
 
 type EventsView = 'table' | 'calendar';
+type EventStatusFilter = EventStatus | '';
 
 const BANGLADESH_TIMEZONE_OFFSET = '+06:00';
+const EVENT_STATUSES: EventStatus[] = [
+  'PENDING',
+  'ACTIVE',
+  'CANCELLED_SCHEDULE',
+  'CANCELLED',
+];
+
+function toBangladeshIsoDateTime(value: string) {
+  return value ? `${value}:00.000${BANGLADESH_TIMEZONE_OFFSET}` : undefined;
+}
 
 export function EventsPage() {
   const [view, setView] = useState<EventsView>('table');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [scheduledAt, setScheduledAt] = useState('');
+  const [statusFilter, setStatusFilter] = useState<EventStatusFilter>('');
+  const [fromFilter, setFromFilter] = useState('');
+  const [toFilter, setToFilter] = useState('');
 
-  const { data: events = [], isLoading, isError, error } = useEvents();
+  const eventFilters = useMemo(
+    () => ({
+      status: statusFilter || undefined,
+      from: toBangladeshIsoDateTime(fromFilter),
+      to: toBangladeshIsoDateTime(toFilter),
+    }),
+    [fromFilter, statusFilter, toFilter],
+  );
+
+  const hasActiveFilters = Boolean(statusFilter || fromFilter || toFilter);
+  const { data: events = [], isLoading, isError, error } = useEvents(eventFilters);
   const createEvent = useCreateEvent();
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -23,7 +48,7 @@ export function EventsPage() {
       {
         title,
         description: description.trim() || undefined,
-        scheduledAt: `${scheduledAt}:00.000${BANGLADESH_TIMEZONE_OFFSET}`,
+        scheduledAt: toBangladeshIsoDateTime(scheduledAt) ?? '',
       },
       {
         onSuccess: () => {
@@ -33,6 +58,12 @@ export function EventsPage() {
         },
       },
     );
+  };
+
+  const resetFilters = () => {
+    setStatusFilter('');
+    setFromFilter('');
+    setToFilter('');
   };
 
   return (
@@ -123,8 +154,69 @@ export function EventsPage() {
         </section>
 
         <section className="rounded-content border border-sand/50 bg-cream">
-          <div className="border-b border-sand/50 px-6 py-5">
-            <h2 className="text-card-title font-semibold text-zapier-black">All Events</h2>
+          <div className="flex flex-col gap-5 border-b border-sand/50 px-6 py-5">
+            <div>
+              <h2 className="text-card-title font-semibold text-zapier-black">All Events</h2>
+              <p className="mt-1 text-sm font-medium text-warm-gray">
+                {hasActiveFilters
+                  ? `${events.length} ${events.length === 1 ? 'event' : 'events'} match the current filters.`
+                  : 'Filter events by status or scheduled time.'}
+              </p>
+            </div>
+
+            <form
+              className="grid gap-4 lg:grid-cols-[minmax(10rem,1fr)_minmax(12rem,1fr)_minmax(12rem,1fr)_auto] lg:items-end"
+              onSubmit={(event) => event.preventDefault()}
+            >
+              <label className="flex flex-col gap-2 text-sm font-semibold text-dark-charcoal">
+                Status
+                <select
+                  className="rounded-content border border-sand/50 bg-cream px-3 py-2 font-system-ui text-zapier-black outline-none transition focus:border-zapier-orange"
+                  value={statusFilter}
+                  onChange={(event) =>
+                    setStatusFilter(event.target.value as EventStatusFilter)
+                  }
+                >
+                  <option value="">All statuses</option>
+                  {EVENT_STATUSES.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="flex flex-col gap-2 text-sm font-semibold text-dark-charcoal">
+                From
+                <input
+                  type="datetime-local"
+                  className="rounded-content border border-sand/50 bg-cream px-3 py-2 font-system-ui text-zapier-black outline-none transition focus:border-zapier-orange"
+                  value={fromFilter}
+                  max={toFilter || undefined}
+                  onChange={(event) => setFromFilter(event.target.value)}
+                />
+              </label>
+
+              <label className="flex flex-col gap-2 text-sm font-semibold text-dark-charcoal">
+                To
+                <input
+                  type="datetime-local"
+                  className="rounded-content border border-sand/50 bg-cream px-3 py-2 font-system-ui text-zapier-black outline-none transition focus:border-zapier-orange"
+                  value={toFilter}
+                  min={fromFilter || undefined}
+                  onChange={(event) => setToFilter(event.target.value)}
+                />
+              </label>
+
+              <button
+                type="button"
+                className="w-fit rounded border border-sand bg-light-sand px-4 py-2 text-base font-semibold text-dark-charcoal transition hover:bg-sand hover:text-zapier-black disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={!hasActiveFilters}
+                onClick={resetFilters}
+              >
+                Reset
+              </button>
+            </form>
           </div>
 
           <div className="p-6">
@@ -137,7 +229,9 @@ export function EventsPage() {
             )}
 
             {!isLoading && !isError && events.length === 0 && (
-              <p className="text-sm font-medium text-warm-gray">No events yet.</p>
+              <p className="text-sm font-medium text-warm-gray">
+                {hasActiveFilters ? 'No events match these filters.' : 'No events yet.'}
+              </p>
             )}
 
             {!isLoading &&

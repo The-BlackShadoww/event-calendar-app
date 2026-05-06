@@ -5,6 +5,7 @@ import {
   Calendar,
   dateFnsLocalizer,
   type EventPropGetter,
+  type View,
 } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { useCancelEvent, useCancelSchedule } from "../../hooks/useEvents";
@@ -94,9 +95,9 @@ const eventPropGetter: EventPropGetter<CalendarEvent> = (calendarEvent) => {
 };
 
 export function EventsCalendar({ events }: EventsCalendarProps) {
-  const [selectedCalendarEvents, setSelectedCalendarEvents] = useState<
-    CalendarEvent[]
-  >([]);
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentView, setCurrentView] = useState<View>("month");
+  const [selectedEventIds, setSelectedEventIds] = useState<number[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [detailsEventId, setDetailsEventId] = useState<number | null>(
     null,
@@ -119,6 +120,14 @@ export function EventsCalendar({ events }: EventsCalendarProps) {
     [events],
   );
 
+  const selectedCalendarEvents = useMemo(
+    () =>
+      calendarEvents.filter((calendarEvent) =>
+        selectedEventIds.includes(calendarEvent.resource.id),
+      ),
+    [calendarEvents, selectedEventIds],
+  );
+
   const sortedSelectedEvents = useMemo(
     () =>
       [...selectedCalendarEvents].sort(
@@ -130,12 +139,20 @@ export function EventsCalendar({ events }: EventsCalendarProps) {
 
   const handleSelectEvent = (calendarEvent: CalendarEvent) => {
     setSelectedDate(calendarEvent.start);
-    setSelectedCalendarEvents([calendarEvent]);
+    setSelectedEventIds([calendarEvent.resource.id]);
   };
 
   const handleShowMore = (dateEvents: CalendarEvent[], date: Date) => {
     setSelectedDate(date);
-    setSelectedCalendarEvents(dateEvents);
+    setSelectedEventIds(dateEvents.map((dateEvent) => dateEvent.resource.id));
+  };
+
+  const handleNavigate = (date: Date) => {
+    setCurrentDate(date);
+  };
+
+  const handleView = (view: View) => {
+    setCurrentView(view);
   };
 
   return (
@@ -146,10 +163,14 @@ export function EventsCalendar({ events }: EventsCalendarProps) {
           events={calendarEvents}
           startAccessor="start"
           endAccessor="end"
-          defaultView="month"
+          date={currentDate}
+          view={currentView}
+          defaultDate={currentDate}
           views={["month", "week", "day"]}
           eventPropGetter={eventPropGetter}
           doShowMoreDrillDown={false}
+          onNavigate={handleNavigate}
+          onView={handleView}
           onSelectEvent={handleSelectEvent}
           onShowMore={handleShowMore}
         />

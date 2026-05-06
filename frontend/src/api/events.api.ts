@@ -1,8 +1,8 @@
 import client from './client';
-import type { CreateEventDto, Event } from '../types/event.types';
+import type { CreateEventDto, Event, EventStatus } from '../types/event.types';
 
 export type EventFilters = {
-  status?: string;
+  status?: EventStatus;
   from?: string;
   to?: string;
 };
