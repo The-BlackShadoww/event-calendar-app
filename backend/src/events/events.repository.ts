@@ -1,8 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { DATABASE_CONNECTION } from '../database/constants';
 import type { DrizzleDB } from 'src/database/types';
-import { CreateEventDto } from './dto/create-event.dto';
-import { events, type Event } from '../database/schema';
+import { events, type CreateEvent, type Event } from '../database/schema';
 import { eq, gte, lte, and, asc, type SQL } from 'drizzle-orm';
 
 @Injectable()
@@ -10,8 +9,10 @@ export class EventsRepository {
   constructor(@Inject(DATABASE_CONNECTION) private readonly db: DrizzleDB) {}
 
   /**
-   * We require `data: CreateEventDto & { status: string }` instead of just `CreateEventDto`
-   * to enforce a strict separation of concerns.
+   * We accept the database insert shape here rather than the DTO shape because
+   * Drizzle expects persisted timestamp columns like `endedAt` as `Date` values.
+   * The Service layer remains responsible for transforming validated DTO input
+   * into this insert-ready payload and for setting internal fields like `status`.
    *
    * 1. Security: The DTO represents exactly what the external client is allowed to send.
    *    We do not want users dictating internal system state like the `status` of an event.
@@ -23,7 +24,7 @@ export class EventsRepository {
    * including auto-generated fields like `id`, `createdAt`, and `updatedAt`, which we
    * wouldn't have access to otherwise.
    */
-  async create(data: CreateEventDto & { status: string }): Promise<Event> {
+  async create(data: CreateEvent): Promise<Event> {
     const [event] = await this.db.insert(events).values(data).returning();
     return event;
   }
@@ -81,5 +82,14 @@ export class EventsRepository {
     extraData?: Partial<Event>,
   ): Promise<Event> {
     return this.update(id, { status, ...extraData });
+  }
+
+  async delete(id: number): Promise<Event | null> {
+    const [deletedEvent] = await this.db
+      .delete(events)
+      .where(eq(events.id, id))
+      .returning();
+
+    return deletedEvent || null;
   }
 }

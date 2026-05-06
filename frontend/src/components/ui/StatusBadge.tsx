@@ -9,6 +9,7 @@ const statusStyles: Record<EventStatus, string> = {
   ACTIVE: 'border-zapier-black bg-zapier-black text-cream',
   CANCELLED_SCHEDULE: 'border-sand bg-light-sand text-dark-charcoal',
   CANCELLED: 'border-mid-warm bg-cream text-warm-gray',
+  COMPLETED: 'border-blue-600 bg-blue-50 text-blue-700',
 };
 
 export function StatusBadge({ status }: StatusBadgeProps) {

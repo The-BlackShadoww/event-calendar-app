@@ -50,3 +50,15 @@ export function useCancelEvent() {
     },
   });
 }
+
+export function useDeleteEvent() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => eventsApi.delete(id),
+    onSuccess: (_event, id) => {
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      queryClient.removeQueries({ queryKey: ["events", id] });
+    },
+  });
+}

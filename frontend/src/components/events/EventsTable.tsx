@@ -1,44 +1,48 @@
-import { Fragment, useState } from "react";
-import { useCancelEvent, useCancelSchedule } from "../../hooks/useEvents";
+import { useState } from "react";
 import type { Event } from "../../types/event.types";
+import {
+  formatDateTime,
+  formatTicketPrice,
+  truncateLocation,
+} from "../../utils/eventFormatters";
 import { EventDetailsModal } from "./EventDetailsModal";
+import { AccessibilityBadge } from "../ui/AccessibilityBadge";
 import { StatusBadge } from "../ui/StatusBadge";
 
 type EventsTableProps = {
   events: Event[];
 };
 
-const DESCRIPTION_LIMIT = 50;
-
-function truncateDescription(description: string | null) {
-  if (!description) {
-    return "-";
+function LocationDisplay({ event }: { event: Event }) {
+  if (event.locationType === "ONLINE") {
+    return (
+      <span className="inline-flex max-w-xs items-center gap-1">
+        <span aria-hidden="true">🔗</span>
+        <a
+          className="truncate text-zapier-orange underline-offset-4 hover:text-zapier-black hover:underline"
+          href={event.locationValue}
+          rel="noreferrer"
+          target="_blank"
+          title={event.locationValue}
+        >
+          {truncateLocation(event.locationValue)}
+        </a>
+      </span>
+    );
   }
 
-  if (description.length <= DESCRIPTION_LIMIT) {
-    return description;
-  }
-
-  return `${description.slice(0, DESCRIPTION_LIMIT - 3)}...`;
-}
-
-function formatScheduledAt(scheduledAt: string) {
-  const date = new Date(scheduledAt);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Invalid date";
-  }
-
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
+  return (
+    <span className="inline-flex max-w-xs items-center gap-1">
+      <span aria-hidden="true">📍</span>
+      <span className="truncate" title={event.locationValue}>
+        {event.locationValue}
+      </span>
+    </span>
+  );
 }
 
 export function EventsTable({ events }: EventsTableProps) {
   const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
-  const cancelSchedule = useCancelSchedule();
-  const cancelEvent = useCancelEvent();
 
   return (
     <>
@@ -53,40 +57,28 @@ export function EventsTable({ events }: EventsTableProps) {
                 Title
               </th>
               <th scope="col" className="px-4 py-3">
-                Description
+                Scheduled At
               </th>
               <th scope="col" className="px-4 py-3">
-                Scheduled At
+                End At
               </th>
               <th scope="col" className="px-4 py-3">
                 Status
               </th>
               <th scope="col" className="px-4 py-3">
-                Actions
+                Type
+              </th>
+              <th scope="col" className="px-4 py-3">
+                Accessibility 
+              </th>
+              <th scope="col" className="px-4 py-3">
+                Location
               </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-sand/50">
-            {events.map((event) => {
-              const isCancellingSchedule =
-                cancelSchedule.isPending &&
-                cancelSchedule.variables === event.id;
-              const isCancellingEvent =
-                cancelEvent.isPending && cancelEvent.variables === event.id;
-              const scheduleError =
-                cancelSchedule.isError && cancelSchedule.variables === event.id
-                  ? cancelSchedule.error?.message
-                  : undefined;
-              const eventError =
-                cancelEvent.isError && cancelEvent.variables === event.id
-                  ? cancelEvent.error?.message
-                  : undefined;
-              const errorMessage = scheduleError ?? eventError;
-              const canCancelEvent = event.status !== "CANCELLED";
-
-              return (
-                <Fragment key={event.id}>
-                  <tr className="bg-cream text-zapier-black">
+            {events.map((event) => (
+              <tr key={event.id} className="bg-cream text-zapier-black">
                     <td className="whitespace-nowrap px-4 py-3 font-semibold">
                       {event.id}
                     </td>
@@ -99,65 +91,26 @@ export function EventsTable({ events }: EventsTableProps) {
                         {event.title}
                       </button>
                     </td>
-                    <td className="px-4 py-3 text-dark-charcoal">
-                      {truncateDescription(event.description)}
+                    <td className="whitespace-nowrap px-4 py-3 text-dark-charcoal">
+                      {formatDateTime(event.scheduledAt)}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-dark-charcoal">
-                      {formatScheduledAt(event.scheduledAt)}
+                      {formatDateTime(event.endedAt)}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3">
                       <StatusBadge status={event.status} />
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        {event.status === "PENDING" && (
-                          <button
-                            type="button"
-                            className="rounded-lg border border-sand bg-light-sand px-4 py-2 text-sm font-semibold text-dark-charcoal transition hover:bg-sand hover:text-zapier-black disabled:cursor-not-allowed disabled:opacity-50"
-                            disabled={isCancellingSchedule}
-                            onClick={() => cancelSchedule.mutate(event.id)}
-                          >
-                            {isCancellingSchedule
-                              ? "Cancelling..."
-                              : "Cancel Schedule"}
-                          </button>
-                        )}
-                        {canCancelEvent && (
-                          <button
-                            type="button"
-                            className="rounded-lg border border-zapier-black bg-zapier-black px-4 py-2 text-sm font-semibold text-cream transition hover:bg-sand hover:text-zapier-black disabled:cursor-not-allowed disabled:opacity-50"
-                            disabled={isCancellingEvent}
-                            onClick={() => cancelEvent.mutate(event.id)}
-                          >
-                            {isCancellingEvent
-                              ? "Cancelling..."
-                              : "Cancel Event"}
-                          </button>
-                        )}
-                        {!canCancelEvent && (
-                          <span
-                            className="text-warm-gray"
-                            aria-label="No available actions"
-                          >
-                            &mdash;
-                          </span>
-                        )}
-                      </div>
+                    <td className="whitespace-nowrap px-4 py-3 text-dark-charcoal">
+                      {formatTicketPrice(event)}
                     </td>
-                  </tr>
-                  {errorMessage && (
-                    <tr className="bg-off-white">
-                      <td
-                        colSpan={6}
-                        className="px-4 py-2 text-sm font-medium text-dark-charcoal"
-                      >
-                        {errorMessage}
-                      </td>
-                    </tr>
-                  )}
-                </Fragment>
-              );
-            })}
+                    <td className="whitespace-nowrap px-4 py-3">
+                      <AccessibilityBadge isPublic={event.isPublic} />
+                    </td>
+                    <td className="px-4 py-3 text-dark-charcoal">
+                      <LocationDisplay event={event} />
+                    </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

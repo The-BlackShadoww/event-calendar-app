@@ -39,4 +39,10 @@ export const eventsApi = {
 
     return response.data;
   },
+
+  async delete(id: number): Promise<Event> {
+    const response = await client.delete<Event>(`/events/${id}`);
+
+    return response.data;
+  },
 };

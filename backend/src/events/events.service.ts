@@ -27,6 +27,13 @@ import { QueueService } from '../queue/queue.service';
 //     PENDING --activateEvent()--> ACTIVE
 //     side effect: bullJobId -> null
 //
+//   completeEvent(eventId):
+//     ACTIVE --completeEvent()--> COMPLETED
+//
+//   deleteEvent(id):
+//     [ANY STATUS] -> deleted row
+//     side effects: remove BullMQ activation/completion jobs for the event
+//
 //   cancelSchedule(id):
 //     PENDING --cancelSchedule()--> CANCELLED_SCHEDULE
 //     side effects: remove BullMQ delayed job, bullJobId -> null
@@ -69,6 +76,11 @@ export class EventsService {
       // Enriching the user-provided DTO with the initial internal state before saving
       const eventData = {
         ...dto,
+        ticketPrice:
+          dto.ticketPrice === undefined
+            ? undefined
+            : dto.ticketPrice.toString(),
+        endedAt: new Date(dto.endedAt),
         status: 'PENDING',
       };
 
@@ -85,6 +97,11 @@ export class EventsService {
       const job = await this.queueService.scheduleEventActivation(
         event.id,
         event.scheduledAt,
+      );
+
+      await this.queueService.scheduleEventCompletion(
+        event.id,
+        new Date(dto.endedAt), // ! what?
       );
 
       // Step 3: Database Update
@@ -144,6 +161,34 @@ export class EventsService {
     });
   }
 
+  async completeEvent(eventId: number): Promise<Event> {
+    return this.eventsRepository.update(eventId, {
+      status: 'COMPLETED',
+      updatedAt: new Date(),
+    });
+  }
+
+  async deleteEvent(id: number): Promise<Event> {
+    const event = await this.findOne(id);
+    const jobIds = new Set([
+      event.bullJobId,
+      `event-${id}-activate`,
+      `event-${id}-complete`,
+    ]);
+
+    await Promise.all(
+      [...jobIds].map((jobId) => this.queueService.removeScheduledJob(jobId)),
+    );
+
+    const deletedEvent = await this.eventsRepository.delete(id);
+
+    if (!deletedEvent) {
+      throw new NotFoundException(`Event with id ${id} not found`);
+    }
+
+    return deletedEvent;
+  }
+
   async cancelSchedule(id: number): Promise<Event> {
     const event = await this.eventsRepository.findById(id);
 
@@ -158,6 +203,7 @@ export class EventsService {
     }
 
     await this.queueService.removeScheduledJob(event.bullJobId ?? '');
+    await this.queueService.removeScheduledJob(`event-${id}-complete`);
 
     return this.eventsRepository.update(id, {
       status: 'CANCELLED_SCHEDULE',
@@ -173,13 +219,7 @@ export class EventsService {
       throw new NotFoundException(`Event with id ${id} not found`);
     }
 
-    // if (event.status !== 'ACTIVE' && event.status !== 'PENDING') {
-    //   throw new BadRequestException(
-    //     `Cannot cancel event with status '${event.status}'. Event must be ACTIVE or PENDING.`,
-    //   );
-    // }
-
-    if (event.status === 'CANCELLED') {
+    if (event.status === 'CANCELLED' || event.status === 'COMPLETED') {
       throw new BadRequestException(
         `Cannot cancel event with status '${event.status}'.`,
       );
@@ -187,6 +227,10 @@ export class EventsService {
 
     if (event.status === 'PENDING') {
       await this.queueService.removeScheduledJob(event.bullJobId ?? '');
+    }
+
+    if (event.status === 'ACTIVE') {
+      await this.queueService.removeScheduledJob(`event-${id}-complete`);
     }
 
     return this.eventsRepository.update(id, {

@@ -1,5 +1,5 @@
 {
-  "id": "3807c6bc-bafa-440d-a0cb-71f3d45d8566",
+  "id": "3339e252-12f1-4e8a-8deb-0e92629ed7e7",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -26,8 +26,65 @@
           "primaryKey": false,
           "notNull": false
         },
+        "is_free": {
+          "name": "is_free",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "ticket_price": {
+          "name": "ticket_price",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "capacity": {
+          "name": "capacity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "requires_approval": {
+          "name": "requires_approval",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "is_public": {
+          "name": "is_public",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "location_type": {
+          "name": "location_type",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "location_value": {
+          "name": "location_value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cover_image_url": {
+          "name": "cover_image_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "scheduled_at": {
           "name": "scheduled_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ended_at": {
+          "name": "ended_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true
@@ -120,7 +177,11 @@
       "checkConstraints": {
         "status_check": {
           "name": "status_check",
-          "value": "\"events\".\"status\" IN ('PENDING', 'ACTIVE', 'CANCELLED_SCHEDULE', 'CANCELLED')"
+          "value": "\"events\".\"status\" IN ('PENDING', 'ACTIVE', 'CANCELLED_SCHEDULE', 'CANCELLED', 'COMPLETED')"
+        },
+        "location_type_check": {
+          "name": "location_type_check",
+          "value": "\"events\".\"location_type\" IN ('PHYSICAL', 'ONLINE')"
         }
       },
       "isRLSEnabled": false

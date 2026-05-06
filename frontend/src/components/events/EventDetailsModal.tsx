@@ -1,5 +1,18 @@
 import { useEffect } from "react";
-import { useEvent } from "../../hooks/useEvents";
+import {
+  useCancelEvent,
+  useCancelSchedule,
+  useDeleteEvent,
+  useEvent,
+} from "../../hooks/useEvents";
+import type { Event } from "../../types/event.types";
+import {
+  formatDateTime,
+  formatTicketPrice,
+  truncateLocation,
+} from "../../utils/eventFormatters";
+import { AccessibilityBadge } from "../ui/AccessibilityBadge";
+import { ApprovalBadge } from "../ui/ApprovalBadge";
 import { StatusBadge } from "../ui/StatusBadge";
 
 type EventDetailsModalProps = {
@@ -7,17 +20,32 @@ type EventDetailsModalProps = {
   onClose: () => void;
 };
 
-function formatDateTime(value: string) {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Invalid date";
+function LocationDisplay({ event }: { event: Event }) {
+  if (event.locationType === "ONLINE") {
+    return (
+      <span className="inline-flex max-w-xs items-center gap-1">
+        <span aria-hidden="true">🔗</span>
+        <a
+          className="truncate text-zapier-orange underline-offset-4 hover:text-zapier-black hover:underline"
+          href={event.locationValue}
+          rel="noreferrer"
+          target="_blank"
+          title={event.locationValue}
+        >
+          {truncateLocation(event.locationValue)}
+        </a>
+      </span>
+    );
   }
 
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
+  return (
+    <span className="inline-flex max-w-xs items-center gap-1">
+      <span aria-hidden="true">📍</span>
+      <span className="truncate" title={event.locationValue}>
+        {event.locationValue}
+      </span>
+    </span>
+  );
 }
 
 function DetailRow({
@@ -44,6 +72,30 @@ export function EventDetailsModal({
   onClose,
 }: EventDetailsModalProps) {
   const { data: event, isLoading, isError, error } = useEvent(eventId);
+  const cancelSchedule = useCancelSchedule();
+  const cancelEvent = useCancelEvent();
+  const deleteEvent = useDeleteEvent();
+  const isCancellingSchedule =
+    cancelSchedule.isPending && cancelSchedule.variables === eventId;
+  const isCancellingEvent =
+    cancelEvent.isPending && cancelEvent.variables === eventId;
+  const isDeletingEvent =
+    deleteEvent.isPending && deleteEvent.variables === eventId;
+  const scheduleError =
+    cancelSchedule.isError && cancelSchedule.variables === eventId
+      ? cancelSchedule.error?.message
+      : undefined;
+  const eventError =
+    cancelEvent.isError && cancelEvent.variables === eventId
+      ? cancelEvent.error?.message
+      : undefined;
+  const deleteError =
+    deleteEvent.isError && deleteEvent.variables === eventId
+      ? deleteEvent.error?.message
+      : undefined;
+  const actionError = scheduleError ?? eventError ?? deleteError;
+  const canCancelEvent =
+    event?.status !== "CANCELLED" && event?.status !== "COMPLETED";
 
   useEffect(() => {
     const handleKeyDown = (keyboardEvent: KeyboardEvent) => {
@@ -115,8 +167,78 @@ export function EventDetailsModal({
               <DetailRow label="Scheduled At">
                 {formatDateTime(event.scheduledAt)}
               </DetailRow>
+              <DetailRow label="End At">
+                {formatDateTime(event.endedAt)}
+              </DetailRow>
               <DetailRow label="Status">
                 <StatusBadge status={event.status} />
+              </DetailRow>
+              <DetailRow label="Ticket">{formatTicketPrice(event)}</DetailRow>
+              <DetailRow label="Capacity">
+                {event.capacity ?? "Unlimited"}
+              </DetailRow>
+              <DetailRow label="Accessibility">
+                <AccessibilityBadge isPublic={event.isPublic} />
+              </DetailRow>
+              <DetailRow label="Location">
+                <LocationDisplay event={event} />
+              </DetailRow>
+              {event.coverImageUrl && (
+                <DetailRow label="Cover Image">
+                  <img
+                    alt={`${event.title} cover`}
+                    className="max-h-20 rounded-content border border-sand/50 object-cover"
+                    src={event.coverImageUrl}
+                  />
+                </DetailRow>
+              )}
+              {event.requiresApproval && (
+                <DetailRow label="Approval">
+                  <ApprovalBadge />
+                </DetailRow>
+              )}
+              <DetailRow label="Actions">
+                <div className="flex flex-wrap items-center gap-2">
+                  {event.status === "PENDING" && (
+                    <button
+                      type="button"
+                      className="rounded-md border border-sand bg-light-sand px-3 py-1.5 text-xs font-semibold text-dark-charcoal transition hover:bg-sand hover:text-zapier-black disabled:cursor-not-allowed disabled:opacity-50"
+                      disabled={isCancellingSchedule}
+                      onClick={() => cancelSchedule.mutate(event.id)}
+                    >
+                      {isCancellingSchedule
+                        ? "Cancelling..."
+                        : "Cancel Schedule"}
+                    </button>
+                  )}
+                  {canCancelEvent && (
+                    <button
+                      type="button"
+                      className="rounded-md border border-zapier-black bg-zapier-black px-3 py-1.5 text-xs font-semibold text-cream transition hover:bg-sand hover:text-zapier-black disabled:cursor-not-allowed disabled:opacity-50"
+                      disabled={isCancellingEvent}
+                      onClick={() => cancelEvent.mutate(event.id)}
+                    >
+                      {isCancellingEvent ? "Cancelling..." : "Cancel Event"}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="rounded-md border border-red-700 bg-cream px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-700 hover:text-cream disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={isDeletingEvent}
+                    onClick={() =>
+                      deleteEvent.mutate(event.id, {
+                        onSuccess: onClose,
+                      })
+                    }
+                  >
+                    {isDeletingEvent ? "Deleting..." : "Delete Event"}
+                  </button>
+                </div>
+                {actionError && (
+                  <p className="mt-2 rounded-content border border-zapier-orange bg-off-white px-3 py-2 text-sm font-medium text-dark-charcoal">
+                    {actionError}
+                  </p>
+                )}
               </DetailRow>
             </dl>
           )}

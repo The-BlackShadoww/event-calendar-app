@@ -14,10 +14,33 @@ export class QueueService {
       'activate-event', // The name of the job
       { eventId }, // The job data payload
       {
-        jobId: `event-${eventId}`,
+        jobId: `event-${eventId}-activate`,
         delay: Math.max(0, delay),
       },
     );
+  }
+
+  async scheduleEventCompletion(eventId: number, endedAt: Date) {
+    const delay = endedAt.getTime() - Date.now();
+    const jobId = `event-${eventId}-complete`;
+
+    await this.eventsQueue.add(
+      'complete-event',
+      { eventId },
+      {
+        jobId,
+        delay: Math.max(0, delay),
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 5000,
+        },
+        removeOnComplete: true,
+        removeOnFail: false,
+      },
+    );
+
+    return jobId;
   }
 
   async removeScheduledJob(jobId: string | null) {

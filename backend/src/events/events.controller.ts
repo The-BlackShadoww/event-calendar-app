@@ -3,6 +3,7 @@ import {
   Post,
   Patch,
   Body,
+  Delete,
   HttpCode,
   HttpStatus,
   Get,
@@ -48,5 +49,10 @@ export class EventsController {
   @Patch(':id/cancel')
   async cancelEvent(@Param('id', ParseIntPipe) id: number) {
     return await this.eventsService.cancelEvent(id);
+  }
+
+  @Delete(':id')
+  async deleteEvent(@Param('id', ParseIntPipe) id: number) {
+    return await this.eventsService.deleteEvent(id);
   }
 }

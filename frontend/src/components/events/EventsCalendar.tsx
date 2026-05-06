@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { addHours, format, getDay, parse, startOfWeek } from "date-fns";
+import { format, getDay, parse, startOfWeek } from "date-fns";
 import { enUS } from "date-fns/locale/en-US";
 import {
   Calendar,
@@ -8,9 +8,15 @@ import {
   type View,
 } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { useCancelEvent, useCancelSchedule } from "../../hooks/useEvents";
 import type { Event, EventStatus } from "../../types/event.types";
+import {
+  formatDateTime,
+  formatTicketPrice,
+  truncateLocation,
+} from "../../utils/eventFormatters";
 import { EventDetailsModal } from "./EventDetailsModal";
+import { AccessibilityBadge } from "../ui/AccessibilityBadge";
+import { ApprovalBadge } from "../ui/ApprovalBadge";
 import { StatusBadge } from "../ui/StatusBadge";
 
 type EventsCalendarProps = {
@@ -60,25 +66,45 @@ const eventStyles: Record<
     borderColor: "#b5b2aa",
     color: "#939084",
   },
+  COMPLETED: {
+    backgroundColor: "#eff6ff",
+    borderColor: "#2563eb",
+    color: "#1d4ed8",
+  },
 };
-
-function formatScheduledAt(scheduledAt: string) {
-  const date = new Date(scheduledAt);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Invalid date";
-  }
-
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
-}
 
 function formatSelectedDate(date: Date) {
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: "full",
   }).format(date);
+}
+
+function LocationDisplay({ event }: { event: Event }) {
+  if (event.locationType === "ONLINE") {
+    return (
+      <span className="inline-flex max-w-xs items-center gap-1">
+        <span aria-hidden="true">🔗</span>
+        <a
+          className="truncate text-zapier-orange underline-offset-4 hover:text-zapier-black hover:underline"
+          href={event.locationValue}
+          rel="noreferrer"
+          target="_blank"
+          title={event.locationValue}
+        >
+          {truncateLocation(event.locationValue)}
+        </a>
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex max-w-xs items-center gap-1">
+      <span aria-hidden="true">📍</span>
+      <span className="truncate" title={event.locationValue}>
+        {event.locationValue}
+      </span>
+    </span>
+  );
 }
 
 const eventPropGetter: EventPropGetter<CalendarEvent> = (calendarEvent) => {
@@ -102,8 +128,6 @@ export function EventsCalendar({ events }: EventsCalendarProps) {
   const [detailsEventId, setDetailsEventId] = useState<number | null>(
     null,
   );
-  const cancelSchedule = useCancelSchedule();
-  const cancelEvent = useCancelEvent();
 
   const calendarEvents = useMemo(
     () =>
@@ -113,7 +137,7 @@ export function EventsCalendar({ events }: EventsCalendarProps) {
         return {
           title: event.title,
           start,
-          end: addHours(start, 1),
+          end: new Date(event.endedAt),
           resource: event,
         };
       }),
@@ -191,26 +215,11 @@ export function EventsCalendar({ events }: EventsCalendarProps) {
           <div className="divide-y divide-sand/50">
             {sortedSelectedEvents.map((calendarEvent) => {
               const event = calendarEvent.resource;
-              const isCancellingSchedule =
-                cancelSchedule.isPending &&
-                cancelSchedule.variables === event.id;
-              const isCancellingEvent =
-                cancelEvent.isPending && cancelEvent.variables === event.id;
-              const scheduleError =
-                cancelSchedule.isError && cancelSchedule.variables === event.id
-                  ? cancelSchedule.error?.message
-                  : undefined;
-              const eventError =
-                cancelEvent.isError && cancelEvent.variables === event.id
-                  ? cancelEvent.error?.message
-                  : undefined;
-              const errorMessage = scheduleError || eventError;
-              const canCancelEvent = event.status !== "CANCELLED";
 
               return (
                 <div
                   key={event.id}
-                  className="flex flex-col gap-3 py-4 sm:flex-row sm:items-start sm:justify-between"
+                  className="py-4"
                 >
                   <div className="min-w-0 space-y-2">
                     <button
@@ -222,50 +231,24 @@ export function EventsCalendar({ events }: EventsCalendarProps) {
                     </button>
                     <div className="flex flex-wrap items-center gap-3 text-sm text-dark-charcoal">
                       <StatusBadge status={event.status} />
-                      <span>{formatScheduledAt(event.scheduledAt)}</span>
+                      <span>{formatDateTime(event.scheduledAt)}</span>
                     </div>
-                    {event.description && (
-                      <p className="wrap-break-word text-sm text-dark-charcoal">
-                        {event.description}
-                      </p>
-                    )}
-                    {errorMessage && (
-                      <p className="rounded-content border border-zapier-orange bg-off-white px-3 py-2 text-sm font-medium text-dark-charcoal">
-                        {errorMessage}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex shrink-0 flex-wrap items-center gap-2">
-                    {event.status === "PENDING" && (
-                      <button
-                        type="button"
-                        className="rounded-lg border border-sand bg-light-sand px-4 py-2 text-sm font-semibold text-dark-charcoal transition hover:bg-sand hover:text-zapier-black disabled:cursor-not-allowed disabled:opacity-50"
-                        disabled={isCancellingSchedule}
-                        onClick={() => cancelSchedule.mutate(event.id)}
-                      >
-                        {isCancellingSchedule
-                          ? "Cancelling..."
-                          : "Cancel Schedule"}
-                      </button>
-                    )}
-                    {canCancelEvent && (
-                      <button
-                        type="button"
-                        className="rounded-lg border border-zapier-black bg-zapier-black px-4 py-2 text-sm font-semibold text-cream transition hover:bg-sand hover:text-zapier-black disabled:cursor-not-allowed disabled:opacity-50"
-                        disabled={isCancellingEvent}
-                        onClick={() => cancelEvent.mutate(event.id)}
-                      >
-                        {isCancellingEvent ? "Cancelling..." : "Cancel Event"}
-                      </button>
-                    )}
-                    {!canCancelEvent && (
-                      <span
-                        className="text-sm text-warm-gray"
-                        aria-label="No available actions"
-                      >
-                        &mdash;
-                      </span>
+                    <div className="flex flex-wrap items-center gap-3 text-sm text-dark-charcoal">
+                      <span>{formatTicketPrice(event)}</span>
+                      <AccessibilityBadge isPublic={event.isPublic} />
+                      {event.requiresApproval && (
+                        <ApprovalBadge />
+                      )}
+                    </div>
+                    <div className="text-sm text-dark-charcoal">
+                      <LocationDisplay event={event} />
+                    </div>
+                    {event.coverImageUrl && (
+                      <img
+                        alt={`${event.title} cover`}
+                        className="max-h-20 rounded-content border border-sand/50 object-cover"
+                        src={event.coverImageUrl}
+                      />
                     )}
                   </div>
                 </div>

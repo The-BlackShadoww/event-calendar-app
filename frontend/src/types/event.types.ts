@@ -1,22 +1,41 @@
 export type EventStatus =
-  | 'PENDING'
-  | 'ACTIVE'
-  | 'CANCELLED_SCHEDULE'
-  | 'CANCELLED'
+  | "PENDING"
+  | "ACTIVE"
+  | "CANCELLED_SCHEDULE"
+  | "CANCELLED"
+  | "COMPLETED";
 
 export interface Event {
-  id: number
-  title: string
-  description: string | null
-  scheduledAt: string
-  status: EventStatus
-  bullJobId: string | null
-  createdAt: string
-  updatedAt: string
+  id: number;
+  title: string;
+  description: string | null;
+  scheduledAt: string;
+  endedAt: string;
+  isFree: boolean;
+  ticketPrice: string | null;
+  capacity: number | null;
+  requiresApproval: boolean;
+  isPublic: boolean;
+  locationType: "PHYSICAL" | "ONLINE";
+  locationValue: string;
+  coverImageUrl: string | null;
+  status: EventStatus;
+  bullJobId: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateEventDto {
-  title: string
-  description?: string
-  scheduledAt: string
+  title: string;
+  description?: string;
+  scheduledAt: string;
+  endedAt: string;
+  isFree: boolean;
+  ticketPrice?: number;
+  capacity?: number;
+  requiresApproval: boolean;
+  isPublic: boolean;
+  locationType: "PHYSICAL" | "ONLINE";
+  locationValue: string;
+  coverImageUrl?: string;
 }
