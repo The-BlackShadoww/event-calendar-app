@@ -20,8 +20,20 @@ async function bootstrap() {
 
   app.useGlobalFilters(new HttpExceptionFilter());
 
+  const requiredEnvVars = ['DATABASE_URL', 'REDIS_HOST', 'REDIS_PORT'] as const;
+  const missingEnvVars = requiredEnvVars.filter(
+    (envVar) => !process.env[envVar],
+  );
+
+  if (missingEnvVars.length > 0) {
+    console.error(
+      `Missing required environment variables: ${missingEnvVars.join(', ')}`,
+    );
+    process.exit(1);
+  }
+
   const port = process.env.PORT ?? 3000;
   await app.listen(port);
   console.log(`Application is running on: http://localhost:${port}`);
 }
-bootstrap();
+void bootstrap();

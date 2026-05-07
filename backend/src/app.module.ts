@@ -11,12 +11,23 @@ import { BullModule } from '@nestjs/bullmq';
     ConfigModule.forRoot({ isGlobal: true }),
 
     BullModule.forRootAsync({
-      useFactory: (config: ConfigService) => ({
-        connection: {
-          host: config.get('REDIS_HOST'),
-          port: config.get<number>('REDIS_PORT'),
-        },
-      }),
+      useFactory: (config: ConfigService) => {
+        const redisUrl = config.get<string>('REDIS_URL');
+        if (redisUrl) {
+          return {
+            connection: {
+              url: redisUrl,
+            },
+          };
+        }
+
+        return {
+          connection: {
+            host: config.getOrThrow<string>('REDIS_HOST'),
+            port: Number(config.getOrThrow<string>('REDIS_PORT')),
+          },
+        };
+      },
       inject: [ConfigService],
     }),
     DatabaseModule,
