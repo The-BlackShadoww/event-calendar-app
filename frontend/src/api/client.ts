@@ -5,7 +5,7 @@ type ApiErrorResponse = {
 };
 
 const client = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_URL ?? '/api',
 });
 
 client.interceptors.response.use(
