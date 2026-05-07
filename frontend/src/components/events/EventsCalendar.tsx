@@ -125,9 +125,7 @@ export function EventsCalendar({ events }: EventsCalendarProps) {
   const [currentView, setCurrentView] = useState<View>("month");
   const [selectedEventIds, setSelectedEventIds] = useState<number[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [detailsEventId, setDetailsEventId] = useState<number | null>(
-    null,
-  );
+  const [detailsEventId, setDetailsEventId] = useState<number | null>(null);
 
   const calendarEvents = useMemo(
     () =>
@@ -217,10 +215,7 @@ export function EventsCalendar({ events }: EventsCalendarProps) {
               const event = calendarEvent.resource;
 
               return (
-                <div
-                  key={event.id}
-                  className="py-4"
-                >
+                <div key={event.id} className="py-4">
                   <div className="min-w-0 space-y-2">
                     <button
                       type="button"
@@ -236,9 +231,7 @@ export function EventsCalendar({ events }: EventsCalendarProps) {
                     <div className="flex flex-wrap items-center gap-3 text-sm text-dark-charcoal">
                       <span>{formatTicketPrice(event)}</span>
                       <AccessibilityBadge isPublic={event.isPublic} />
-                      {event.requiresApproval && (
-                        <ApprovalBadge />
-                      )}
+                      {event.requiresApproval && <ApprovalBadge />}
                     </div>
                     <div className="text-sm text-dark-charcoal">
                       <LocationDisplay event={event} />

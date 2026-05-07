@@ -53,16 +53,6 @@ import { QueueService } from '../queue/queue.service';
 
 @Injectable()
 export class EventsService {
-  /*
-   * Logger
-   *
-   * What it does:
-   * NestJS provides a built-in Logger class that standardizes how our application writes to the console.
-   * Instead of using standard 'console.log()', the Logger offers better formatting (timestamps, color coding),
-   * and allows us to easily control different log levels (like 'error', 'warn', 'debug') based on our environment.
-   * By passing 'EventsService.name' as the context, every log message from this file will be prefixed
-   * with "[EventsService]", making it incredibly easy to trace where logs originated from in the terminal.
-   */
   private readonly logger = new Logger(EventsService.name);
 
   constructor(
@@ -101,7 +91,7 @@ export class EventsService {
 
       await this.queueService.scheduleEventCompletion(
         event.id,
-        new Date(dto.endedAt), // ! what?
+        new Date(dto.endedAt),
       );
 
       // Step 3: Database Update

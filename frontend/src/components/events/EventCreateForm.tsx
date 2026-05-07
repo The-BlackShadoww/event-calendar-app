@@ -1,9 +1,8 @@
 import { type FormEvent, useState } from "react";
 import { useCreateEvent } from "../../hooks/useEvents";
+import { toBangladeshIsoDateTime } from "../../utils/eventFormatters";
+import type { EventLocationType } from "../../types/event.types";
 
-type EventLocationType = "PHYSICAL" | "ONLINE";
-
-const BANGLADESH_TIMEZONE_OFFSET = "+06:00";
 const composerFieldClass =
   "w-full rounded-content border border-sand bg-cream px-3 py-2 text-sm font-semibold text-zapier-black outline-none transition placeholder:text-warm-gray focus:border-zapier-orange disabled:bg-light-sand disabled:text-warm-gray";
 const composerInlineInputClass =
@@ -12,10 +11,6 @@ const composerRowClass =
   "flex flex-col gap-3 border-b border-sand/50 px-4 py-4 last:border-b-0 sm:flex-row sm:items-center sm:justify-between";
 const composerLabelClass = "text-sm font-semibold text-dark-charcoal";
 const composerErrorClass = "mt-2 text-sm font-semibold text-zapier-orange";
-
-function toBangladeshIsoDateTime(value: string) {
-  return value ? `${value}:00.000${BANGLADESH_TIMEZONE_OFFSET}` : undefined;
-}
 
 export function EventCreateForm() {
   const [title, setTitle] = useState("");
@@ -60,7 +55,9 @@ export function EventCreateForm() {
 
     if (locationType && !locationValue.trim()) {
       setLocationValueWarning(
-        locationType === "PHYSICAL" ? "Address is required" : "Meeting URL is required",
+        locationType === "PHYSICAL"
+          ? "Address is required"
+          : "Meeting URL is required",
       );
       return;
     }
@@ -175,14 +172,18 @@ export function EventCreateForm() {
                   }}
                   required
                 />
-                {endedAtError && <span className={composerErrorClass}>{endedAtError}</span>}
+                {endedAtError && (
+                  <span className={composerErrorClass}>{endedAtError}</span>
+                )}
               </div>
             </div>
           </div>
 
           <div className="rounded-lg border border-sand bg-off-white p-4">
             <span className={composerLabelClass}>Timezone</span>
-            <p className="mt-2 text-base font-semibold text-zapier-black">GMT+06:00</p>
+            <p className="mt-2 text-base font-semibold text-zapier-black">
+              GMT+06:00
+            </p>
             <p className="mt-1 text-sm font-semibold text-warm-gray">Dhaka</p>
           </div>
         </div>
@@ -205,7 +206,9 @@ export function EventCreateForm() {
                 <option value="ONLINE">Online</option>
               </select>
               {!locationType && locationValueWarning && (
-                <span className={composerErrorClass}>{locationValueWarning}</span>
+                <span className={composerErrorClass}>
+                  {locationValueWarning}
+                </span>
               )}
             </label>
 
@@ -215,7 +218,11 @@ export function EventCreateForm() {
               </span>
               <input
                 type="text"
-                placeholder={locationType === "ONLINE" ? "Add virtual link" : "Add event location"}
+                placeholder={
+                  locationType === "ONLINE"
+                    ? "Add virtual link"
+                    : "Add event location"
+                }
                 className={composerFieldClass}
                 value={locationValue}
                 onChange={(event) => {
@@ -225,7 +232,9 @@ export function EventCreateForm() {
                 disabled={!locationType}
               />
               {locationType && locationValueWarning && (
-                <span className={composerErrorClass}>{locationValueWarning}</span>
+                <span className={composerErrorClass}>
+                  {locationValueWarning}
+                </span>
               )}
             </label>
           </div>
@@ -243,7 +252,9 @@ export function EventCreateForm() {
           </label>
 
           <label className="flex flex-col gap-2 rounded-lg border border-sand bg-off-white p-4">
-            <span className={composerLabelClass}>Cover Image URL (optional)</span>
+            <span className={composerLabelClass}>
+              Cover Image URL (optional)
+            </span>
             <input
               type="text"
               placeholder="https://..."
@@ -276,7 +287,9 @@ export function EventCreateForm() {
                 Free Event
               </label>
               {isFree ? (
-                <span className="text-sm font-semibold text-warm-gray">Free</span>
+                <span className="text-sm font-semibold text-warm-gray">
+                  Free
+                </span>
               ) : (
                 <div className="w-full sm:max-w-56">
                   <input
@@ -291,7 +304,11 @@ export function EventCreateForm() {
                       setTicketPriceError("");
                     }}
                   />
-                  {ticketPriceError && <span className={composerErrorClass}>{ticketPriceError}</span>}
+                  {ticketPriceError && (
+                    <span className={composerErrorClass}>
+                      {ticketPriceError}
+                    </span>
+                  )}
                 </div>
               )}
             </div>
@@ -302,7 +319,9 @@ export function EventCreateForm() {
                   type="checkbox"
                   className="h-4 w-4 accent-zapier-orange"
                   checked={requiresApproval}
-                  onChange={(event) => setRequiresApproval(event.target.checked)}
+                  onChange={(event) =>
+                    setRequiresApproval(event.target.checked)
+                  }
                 />
                 Requires Approval
               </label>
@@ -325,7 +344,12 @@ export function EventCreateForm() {
           </div>
         </div>
 
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="mt-8 flex flex-col gap-3">
+          {createEvent.isError && (
+            <p className="rounded-content border border-zapier-orange bg-off-white px-3 py-2 text-sm font-semibold text-dark-charcoal">
+              {createEvent.error.message}
+            </p>
+          )}
           <button
             type="submit"
             className="w-full rounded-lg border border-zapier-orange bg-zapier-orange px-5 py-4 text-base font-semibold text-cream transition hover:border-zapier-black hover:bg-zapier-black disabled:cursor-not-allowed disabled:opacity-50"
@@ -333,12 +357,6 @@ export function EventCreateForm() {
           >
             {createEvent.isPending ? "Creating..." : "Create Event"}
           </button>
-
-          {createEvent.isError && (
-            <p className="rounded-content border border-zapier-orange bg-off-white px-3 py-2 text-sm font-semibold text-dark-charcoal">
-              {createEvent.error.message}
-            </p>
-          )}
         </div>
       </form>
     </section>

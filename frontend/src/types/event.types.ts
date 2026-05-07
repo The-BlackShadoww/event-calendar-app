@@ -5,6 +5,11 @@ export type EventStatus =
   | "CANCELLED"
   | "COMPLETED";
 
+export type EventLocationType = "PHYSICAL" | "ONLINE";
+export type EventsView = "table" | "calendar";
+export type HomeContentView = "list" | "form";
+export type EventStatusFilter = EventStatus | "";
+
 export interface Event {
   id: number;
   title: string;

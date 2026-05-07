@@ -1,6 +1,7 @@
 import type { Event } from "../types/event.types";
 
 const DEFAULT_LOCATION_LIMIT = 30;
+const BANGLADESH_TIMEZONE_OFFSET = "+06:00";
 
 export function formatDateTime(value: string) {
   const date = new Date(value);
@@ -41,4 +42,8 @@ export function truncateLocation(
   }
 
   return `${locationValue.slice(0, limit - 3)}...`;
+}
+
+export function toBangladeshIsoDateTime(value: string) {
+  return value ? `${value}:00.000${BANGLADESH_TIMEZONE_OFFSET}` : undefined;
 }

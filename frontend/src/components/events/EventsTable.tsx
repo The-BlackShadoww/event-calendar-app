@@ -66,10 +66,10 @@ export function EventsTable({ events }: EventsTableProps) {
                 Status
               </th>
               <th scope="col" className="px-4 py-3">
-                Type
+                Ticket Price
               </th>
               <th scope="col" className="px-4 py-3">
-                Accessibility 
+                Accessibility
               </th>
               <th scope="col" className="px-4 py-3">
                 Location
@@ -79,36 +79,36 @@ export function EventsTable({ events }: EventsTableProps) {
           <tbody className="divide-y divide-sand/50">
             {events.map((event) => (
               <tr key={event.id} className="bg-cream text-zapier-black">
-                    <td className="whitespace-nowrap px-4 py-3 font-semibold">
-                      {event.id}
-                    </td>
-                    <td className="px-4 py-3">
-                      <button
-                        type="button"
-                        className="max-w-xs wrap-break-word text-left font-semibold text-zapier-orange underline-offset-4 transition hover:text-zapier-black hover:underline focus:outline-none focus:ring-2 focus:ring-zapier-orange focus:ring-offset-2 focus:ring-offset-cream"
-                        onClick={() => setSelectedEventId(event.id)}
-                      >
-                        {event.title}
-                      </button>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-dark-charcoal">
-                      {formatDateTime(event.scheduledAt)}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-dark-charcoal">
-                      {formatDateTime(event.endedAt)}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3">
-                      <StatusBadge status={event.status} />
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-dark-charcoal">
-                      {formatTicketPrice(event)}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3">
-                      <AccessibilityBadge isPublic={event.isPublic} />
-                    </td>
-                    <td className="px-4 py-3 text-dark-charcoal">
-                      <LocationDisplay event={event} />
-                    </td>
+                <td className="whitespace-nowrap px-4 py-3 font-semibold">
+                  {event.id}
+                </td>
+                <td className="px-4 py-3">
+                  <button
+                    type="button"
+                    className="max-w-xs wrap-break-word text-left font-semibold text-zapier-orange underline-offset-4 transition hover:text-zapier-black hover:underline focus:outline-none focus:ring-2 focus:ring-zapier-orange focus:ring-offset-2 focus:ring-offset-cream"
+                    onClick={() => setSelectedEventId(event.id)}
+                  >
+                    {event.title}
+                  </button>
+                </td>
+                <td className="whitespace-nowrap px-4 py-3 text-dark-charcoal">
+                  {formatDateTime(event.scheduledAt)}
+                </td>
+                <td className="whitespace-nowrap px-4 py-3 text-dark-charcoal">
+                  {formatDateTime(event.endedAt)}
+                </td>
+                <td className="whitespace-nowrap px-4 py-3">
+                  <StatusBadge status={event.status} />
+                </td>
+                <td className="whitespace-nowrap px-4 py-3 text-dark-charcoal">
+                  {formatTicketPrice(event)}
+                </td>
+                <td className="whitespace-nowrap px-4 py-3">
+                  <AccessibilityBadge isPublic={event.isPublic} />
+                </td>
+                <td className="px-4 py-3 text-dark-charcoal">
+                  <LocationDisplay event={event} />
+                </td>
               </tr>
             ))}
           </tbody>

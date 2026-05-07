@@ -35,7 +35,9 @@ export function EventsFiltersForm({
         <select
           className="rounded-content border border-sand/50 bg-cream px-3 py-2 font-system-ui text-zapier-black outline-none transition focus:border-zapier-orange"
           value={statusFilter}
-          onChange={(event) => onStatusChange(event.target.value as EventStatusFilter)}
+          onChange={(event) =>
+            onStatusChange(event.target.value as EventStatusFilter)
+          }
         >
           <option value="">All statuses</option>
           {eventStatuses.map((status) => (

@@ -1,4 +1,4 @@
-import { EventsPage } from './pages/EventsPage';
+import { EventsPage } from "./pages/EventsPage";
 
 function App() {
   return <EventsPage />;
