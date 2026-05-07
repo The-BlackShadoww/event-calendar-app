@@ -11,8 +11,12 @@ import { BullModule } from '@nestjs/bullmq';
     ConfigModule.forRoot({ isGlobal: true }),
 
     BullModule.forRootAsync({
+      inject: [ConfigService],
       useFactory: (config: ConfigService) => {
         const redisUrl = config.get<string>('REDIS_URL');
+
+        // Production (Railway): uses a single REDIS_URL connection string
+        // Local development (Docker): uses separate REDIS_HOST and REDIS_PORT
         if (redisUrl) {
           return {
             connection: {
@@ -21,15 +25,16 @@ import { BullModule } from '@nestjs/bullmq';
           };
         }
 
+        // Fallback for local Docker development
         return {
           connection: {
-            host: config.getOrThrow<string>('REDIS_HOST'),
-            port: Number(config.getOrThrow<string>('REDIS_PORT')),
+            host: config.get<string>('REDIS_HOST'),
+            port: Number(config.get<string>('REDIS_PORT')),
           },
         };
       },
-      inject: [ConfigService],
     }),
+
     DatabaseModule,
     EventsModule,
   ],

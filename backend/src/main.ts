@@ -7,7 +7,9 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: 'http://localhost:5173',
+    origin: ['http://localhost:5173', process.env.FRONTEND_URL].filter(
+      Boolean,
+    ) as string[],
   });
 
   app.useGlobalPipes(
@@ -20,7 +22,13 @@ async function bootstrap() {
 
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  const requiredEnvVars = ['DATABASE_URL', 'REDIS_HOST', 'REDIS_PORT'] as const;
+  // REDIS_URL is used in production (Railway provides a single connection string)
+  // REDIS_HOST + REDIS_PORT are used in local Docker development
+  // We only require one of these two setups to be present
+  const hasRedisUrl = !!process.env.REDIS_URL;
+  const hasRedisHostPort = !!process.env.REDIS_HOST && !!process.env.REDIS_PORT;
+
+  const requiredEnvVars = ['DATABASE_URL'] as const;
   const missingEnvVars = requiredEnvVars.filter(
     (envVar) => !process.env[envVar],
   );
@@ -28,6 +36,14 @@ async function bootstrap() {
   if (missingEnvVars.length > 0) {
     console.error(
       `Missing required environment variables: ${missingEnvVars.join(', ')}`,
+    );
+    process.exit(1);
+  }
+
+  if (!hasRedisUrl && !hasRedisHostPort) {
+    console.error(
+      'Missing Redis configuration. Provide either REDIS_URL (production) ' +
+        'or both REDIS_HOST and REDIS_PORT (local development).',
     );
     process.exit(1);
   }
