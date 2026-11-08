@@ -1,5 +1,27 @@
 # Event Calendar
 
+Schedule an event and it opens and closes itself on time. Each event moves through `PENDING → ACTIVE → COMPLETED` (or a cancelled state), driven by delayed BullMQ jobs instead of a polling cron.
+
+Built by [Ashikur Rahman](https://ashikurrahman.vercel.app). Run it locally with the steps below.
+
+## How it works
+
+```mermaid
+flowchart LR
+  UI[React + Vite] -->|REST| API[NestJS API]
+  API -->|Drizzle| PG[(PostgreSQL)]
+  API -->|delayed jobs| Q[(Redis / BullMQ)]
+  Q --> W[Events worker]
+  W -->|set ACTIVE / COMPLETED| PG
+```
+
+- **One delayed job per transition.** Creating an event queues an `activate-event` job for its start time and a `complete-event` job for its end time.
+- **Deterministic job IDs** (`event-<id>-activate`, `event-<id>-complete`), so the same transition is never queued twice.
+- **Retries with exponential backoff** on completion jobs; failed jobs are kept for inspection.
+- **Status rules in the database**: a `CHECK` constraint allows only the five valid statuses, and a `(status, scheduled_at)` index keeps the calendar queries fast.
+
+## Project layout
+
 Event Calendar is a full-stack local development project with:
 
 - `backend`: NestJS API, PostgreSQL, Redis, BullMQ, Drizzle ORM
